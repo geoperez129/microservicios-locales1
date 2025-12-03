@@ -32,8 +32,5 @@ ENV WEB_DOCUMENT_ROOT=/app/public
 RUN mkdir -p /app/storage /app/bootstrap/cache \
     && chown -R application:application /app/storage /app/bootstrap/cache || true
 
-# Usar usuario application
-USER application
-
 # Puerto HTTP
 EXPOSE 80
