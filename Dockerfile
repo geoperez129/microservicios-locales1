@@ -11,7 +11,7 @@ COPY . /app
 ENV WEB_DOCUMENT_ROOT=/app/public
 
 # Instalamos las dependencias de Laravel
-RUN composer install --no-dev --optimize-autoloader --no interaccion --no scrips
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Damos permisos a storage y cache
 RUN chown -R application:application /app/storage /app/bootstrap/cache
