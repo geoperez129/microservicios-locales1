@@ -1,23 +1,26 @@
-# Imagen con PHP + Nginx lista para producción
+# Imagen base con PHP 8.2 + Nginx
 FROM webdevops/php-nginx:8.2-alpine
 
 # Carpeta de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos todo el proyecto
+# Copiamos solo composer.json y composer.lock primero (mejora la caché)
+COPY composer.json composer.lock ./
+
+# Instalamos las dependencias de Laravel SIN scripts (no corre artisan)
+RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader
+
+# Ahora copiamos todo el proyecto
 COPY . /app
 
-# Indicamos que la carpeta pública de Laravel es el docroot
+# Carpeta pública de Laravel
 ENV WEB_DOCUMENT_ROOT=/app/public
 
-# Instalamos las dependencias de Laravel
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --ignore-plataform-reqs
-
-# Damos permisos a storage y cache
+# Permisos para storage y cache
 RUN chown -R application:application /app/storage /app/bootstrap/cache
 
-# Usar el usuario application (buena práctica)
+# Usamos el usuario application
 USER application
 
-# Render va a entrar por el puerto 80 del contenedor
+# Puerto por el que va a escuchar Nginx
 EXPOSE 80
