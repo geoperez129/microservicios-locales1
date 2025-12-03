@@ -1,4 +1,4 @@
-# === Etapa 1: construir dependencias con Composer ===
+# === Etapa 1: instalar dependencias con Composer ===
 FROM composer:2 AS vendor
 
 WORKDIR /app
@@ -6,12 +6,13 @@ WORKDIR /app
 # Copiamos archivos de Composer
 COPY composer.json composer.lock ./
 
-# Instalamos dependencias (sin dev)
+# Instalamos dependencias SIN dev y SIN scripts (no corre artisan)
 RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
 
 # === Etapa 2: imagen final con PHP + Nginx ===
 FROM webdevops/php-nginx:8.2-alpine
@@ -21,7 +22,7 @@ WORKDIR /app
 # Copiamos todo el proyecto
 COPY . /app
 
-# Copiamos la carpeta vendor desde la primera etapa
+# Copiamos la carpeta vendor desde la etapa anterior
 COPY --from=vendor /app/vendor /app/vendor
 
 # Laravel sirve desde /public
