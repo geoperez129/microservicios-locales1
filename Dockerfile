@@ -28,8 +28,9 @@ COPY --from=vendor /app/vendor /app/vendor
 # Laravel sirve desde /public
 ENV WEB_DOCUMENT_ROOT=/app/public
 
-# Permisos para storage y cache
-RUN chown -R application:application /app/storage /app/bootstrap/cache
+# Crear carpetas necesarias y dar permisos
+RUN mkdir -p /app/storage /app/bootstrap/cache \
+    && chown -R application:application /app/storage /app/bootstrap/cache || true
 
 # Usar usuario application
 USER application
