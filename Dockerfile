@@ -1,26 +1,37 @@
-# Imagen base con PHP 8.2 + Nginx
-FROM webdevops/php-nginx:8.2-alpine
+# === Etapa 1: construir dependencias con Composer ===
+FROM composer:2 AS vendor
 
-# Carpeta de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos solo composer.json y composer.lock primero (mejora la caché)
+# Copiamos archivos de Composer
 COPY composer.json composer.lock ./
 
-# Instalamos las dependencias de Laravel SIN scripts (no corre artisan)
-RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader
+# Instalamos dependencias (sin dev)
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
 
-# Ahora copiamos todo el proyecto
+# === Etapa 2: imagen final con PHP + Nginx ===
+FROM webdevops/php-nginx:8.2-alpine
+
+WORKDIR /app
+
+# Copiamos todo el proyecto
 COPY . /app
 
-# Carpeta pública de Laravel
+# Copiamos la carpeta vendor desde la primera etapa
+COPY --from=vendor /app/vendor /app/vendor
+
+# Laravel sirve desde /public
 ENV WEB_DOCUMENT_ROOT=/app/public
 
 # Permisos para storage y cache
 RUN chown -R application:application /app/storage /app/bootstrap/cache
 
-# Usamos el usuario application
+# Usar usuario application
 USER application
 
-# Puerto por el que va a escuchar Nginx
+# Puerto HTTP
 EXPOSE 80
