@@ -1,36 +1,37 @@
-# === Etapa 1: instalar dependencias con Composer ===
-FROM composer:2 AS vendor
+# Etapa 1: solo para obtener Composer
+FROM composer:2 AS composer_stage
 
+# Etapa 2: imagen principal con PHP
+FROM php:8.2-cli-alpine
+
+# Instalamos extensiones necesarias para Laravel y MySQL
+RUN apk add --no-cache \
+    git \
+    unzip \
+    libpng-dev \
+    libzip-dev \
+    oniguruma-dev \
+    mysql-client \
+ && docker-php-ext-install pdo_mysql
+
+# Carpeta de la aplicación
 WORKDIR /app
 
-# Copiamos archivos de Composer
-COPY composer.json composer.lock ./
+# Copiamos todo el proyecto Laravel
+COPY . .
 
-# Instalamos dependencias SIN dev y SIN scripts (no corre artisan)
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts
+# Copiamos el binario de composer desde la primera etapa
+COPY --from=composer_stage /usr/bin/composer /usr/bin/composer
 
-# === Etapa 2: imagen final con PHP + Nginx ===
-FROM webdevops/php-nginx:8.2-alpine
+# Instalamos dependencias de Laravel (incluyendo scripts)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-WORKDIR /app
+# Creamos usuario no-root para cumplir con Render
+RUN adduser -D appuser
+USER appuser
 
-# Copiamos todo el proyecto
-COPY . /app
+# Puerto donde escuchará Laravel
+EXPOSE 10000
 
-# Copiamos la carpeta vendor desde la etapa anterior
-COPY --from=vendor /app/vendor /app/vendor
-
-# Laravel sirve desde /public
-ENV WEB_DOCUMENT_ROOT=/app/public
-
-# Crear carpetas necesarias y dar permisos
-RUN mkdir -p /app/storage /app/bootstrap/cache \
-    && chown -R application:application /app/storage /app/bootstrap/cache || true
-
-# Puerto HTTP
-EXPOSE 80
+# Comando de arranque: servidor integrado de Laravel
+CMD php artisan serve --host=0.0.0.0 --port=10000
