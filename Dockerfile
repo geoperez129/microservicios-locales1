@@ -24,7 +24,7 @@ COPY . .
 COPY --from=composer_stage /usr/bin/composer /usr/bin/composer
 
 # Instalamos dependencias de Laravel (incluyendo scripts)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Creamos usuario no-root para cumplir con Render
 RUN adduser -D appuser
